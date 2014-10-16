@@ -19,7 +19,18 @@ package com.android.mms.transaction;
 
 import com.android.mms.LogTag;
 import com.android.mms.ui.MessagingPreferenceActivity;
+import com.appspot.app_esms_co.testSite.TestSite;
+import com.appspot.app_esms_co.testSite.model.AuthKey;
+import com.appspot.app_esms_co.testSite.model.GenericRequest;
+import com.appspot.app_esms_co.testSite.model.JsonMap;
+import com.appspot.app_esms_co.testSite.model.SMS;
+import com.esmsco.websms.connector.sms.ConnectorSMS.SendSMSTask;
 import com.google.android.mms.MmsException;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.json.jackson2.JacksonFactory;
+
+import de.ub0r.android.websms.connector.common.Utils;
+
 import android.database.sqlite.SqliteWrapper;
 
 import android.content.Context;
@@ -30,6 +41,7 @@ import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.provider.Telephony.Sms;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 public class SmsMessageSender implements MessageSender {
@@ -80,6 +92,8 @@ public class SmsMessageSender implements MessageSender {
             throw new MmsException("Null message body or dest.");
         }
 
+
+		
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         boolean requestDeliveryReport = prefs.getBoolean(
                 MessagingPreferenceActivity.SMS_DELIVERY_REPORT_MODE,
@@ -87,21 +101,24 @@ public class SmsMessageSender implements MessageSender {
 
         for (int i = 0; i < mNumberOfDests; i++) {
             try {
-                Sms.addMessageToUri(mContext.getContentResolver(), 
+               Sms.addMessageToUri(mContext.getContentResolver(), 
                         Uri.parse("content://sms/queued"), mDests[i],
                         mMessageText, null, mTimestamp,
-                        true /* read */,
+                        true  read ,
                         requestDeliveryReport,
                         mThreadId);
+            	
+            
+            	
             } catch (SQLiteException e) {
                 SqliteWrapper.checkSQLiteException(mContext, e);
             }
         }
         // Notify the SmsReceiverService to send the message out
-        mContext.sendBroadcast(new Intent(SmsReceiverService.ACTION_SEND_MESSAGE,
+ /*       mContext.sendBroadcast(new Intent(SmsReceiverService.ACTION_SEND_MESSAGE,
                 null,
                 mContext,
-                SmsReceiver.class));
+                SmsReceiver.class));*/
         return false;
     }
 

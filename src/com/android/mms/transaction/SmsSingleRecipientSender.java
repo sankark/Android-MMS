@@ -9,13 +9,22 @@ import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.provider.Telephony.Mms;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.android.mms.LogTag;
 import com.android.mms.MmsConfig;
 import com.google.android.mms.MmsException;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.json.jackson2.JacksonFactory;
+
 import android.provider.Telephony.Sms;
 import com.android.mms.ui.MessageUtils;
+import com.appspot.app_esms_co.testSite.TestSite;
+import com.appspot.app_esms_co.testSite.model.AuthKey;
+import com.appspot.app_esms_co.testSite.model.GenericRequest;
+import com.appspot.app_esms_co.testSite.model.JsonMap;
+import com.appspot.app_esms_co.testSite.model.SMS;
 
 public class SmsSingleRecipientSender extends SmsMessageSender {
 
@@ -32,6 +41,16 @@ public class SmsSingleRecipientSender extends SmsMessageSender {
     }
 
     public boolean sendMessage(long token) throws MmsException {
+    	
+    	JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+		TestSite service  = new TestSite.Builder(AndroidHttp.newCompatibleTransport(),jsonFactory,null).setApplicationName("TestSite").build();
+		
+		GenericRequest gr = new GenericRequest();
+		AuthKey authKey = new AuthKey();
+		authKey.setKey("9ac93f4c-4333-4328-9033-197873b02dba");
+		authKey.setUserName("test1");
+		gr.setAuthKey(authKey );
+		SMS sms  = null;
         if (mMessageText == null) {
             // Don't try to send an empty message, and destination should be just
             // one.
@@ -91,7 +110,18 @@ public class SmsSingleRecipientSender extends SmsMessageSender {
                     mContext, 0, intent, 0));
         }
         try {
-            smsManager.sendMultipartTextMessage(mDest, mServiceCenter, messages, sentIntents, deliveryIntents);
+            //smsManager.sendMultipartTextMessage(mDest, mServiceCenter, messages, sentIntents, deliveryIntents);
+        	
+        	sms = new SMS();
+    		sms.setMsg(messages.get(0));
+    		sms.setReceiver(mDest);
+    		TelephonyManager tMgr = (TelephonyManager)mContext.getSystemService(Context.TELEPHONY_SERVICE);
+    		String mPhoneNumber = tMgr.getLine1Number();
+    		sms.setSender("9245202076");
+    		sms.setSenderUserName("test1");
+    		gr.setSms(sms );
+        	JsonMap res = service.cloudEndPoints().sendSMS(gr ).execute();
+        	
         } catch (Exception ex) {
             throw new MmsException("SmsMessageSender.sendMessage: caught " + ex +
                     " from SmsManager.sendTextMessage()");
